@@ -31,4 +31,24 @@ class UserService(userRepository: UserRepository, profileRepository: ProfileRepo
           else Right(user)
       }
     } yield user
+
+  def createUserOfLegalAgeWithSponsorship(user: User, sponsor: User.Id): Future[Either[String, Unit]] =
+    for {
+      evSponsor <- userRepository.get(sponsor)
+      result <- evSponsor match {
+        case None => Future.successful(Left("Sponsor not found"))
+        case Some(_) =>
+          if(user.age < 18) Future.successful(Left("User is too young"))
+          else userRepository.create(user)
+      }
+    } yield result
+
+  def createUserWithBanCheck(user: User): Future[Either[String, Unit]] =
+    ???
+
+  private val banlist = Set("Insulting name")
+  def nameIsNotBanned(user: User): Either[String, User] =
+    if(banlist.contains(user.firstName) || banlist.contains(user.lastName)) Left("User is banned")
+    else Right(user)
+
 }
